@@ -1,0 +1,5 @@
+cron:
+  - description: "schedule automatic updates"
+    url: /update
+    schedule: every 1 hours
+    timezone: Europe/Berlin
