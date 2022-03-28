@@ -1,23 +1,11 @@
 import express from "express";
-import * as ParseService  from "./app/services/parse.service";
+import * as Main from "./app/main";
 
-// Run an express server to generate reports on demand
+// Express server to expose endpoints
 const app = express();
 
-// TODO: Get by list of months
-// TODO: Get by month
-app.get("/", (req, res) => {
-  ParseService.run().then(
-    (result) => {
-      res.send(result);
-    },
-    (error) => {
-      res.status(400).send(error.message);
-    }
-  );
-});
-app.post("/", (req, res) => {
-  ParseService.run().then(
+app.get("/update", (req, res) => {
+  Main.run().then(
     (result) => {
       res.send(result);
     },
