@@ -1,16 +1,17 @@
 import { Expose, Transform } from "class-transformer";
-import moment from "moment";
 import Utils from "../common/utils";
 
 export class Transaction {
   @Expose()
-  @Transform(({ obj }) => obj.transaction_info.invoice_id)
-  invoice_id = "";
-
-  @Expose()
   @Transform(({ obj }) => obj.transaction_info.transaction_id)
   tr_id = "";
 
+  @Expose()
+  @Transform(({ obj }) => obj.transaction_info.invoice_id)
+  invoice_id = "";
+
+  // Documentation: https://developer.paypal.com/docs/reports/reference/tcodes/
+  // T1107 = refund; T0113 = fee;
   @Expose()
   @Transform(({ obj }) => obj.transaction_info.transaction_event_code)
   tr_event_code = "";
@@ -23,43 +24,50 @@ export class Transaction {
   @Transform(({ obj }) => obj.transaction_info.transaction_subject)
   tr_subject = "";
 
-  // BUG: PayPal does not return consistent data
+  // BUG: PayPal does not return consistent instrument_type data
   // @Expose()
   // @Transform(({ obj }) => obj.transaction_info.instrument_type)
   // tr_medium= ""
 
+  // Updated date is the date considered by PayPal when retrieving data, not the creation date
   @Expose()
   @Transform(({ obj }) =>
-    moment(
-      obj.transaction_info.transaction_initiation_date.substring(0, 10)
-    ).format("DD.MM.YYYY")
+    Utils.reportTime(obj.transaction_info.transaction_updated_date).format("DD.MM.YYYY"),
   )
-  tr_date = "";
+  tr_updated_date = "";
 
   @Expose()
   @Transform(({ obj }) =>
-    obj.transaction_info.transaction_initiation_date.substring(11, 19)
+    Utils.reportTime(obj.transaction_info.transaction_updated_date).format("HH:mm:ss"),
   )
-  tr_time = "";
+  tr_updated_time = "";
 
   @Expose()
   @Transform(({ obj }) =>
-    Utils.euroFormat(obj.transaction_info.transaction_amount.value)
+    Utils.reportTime(obj.transaction_info.transaction_updated_date).format("DD.MM.YYYY"),
   )
-  tr_amount = Utils.euroFormat(0);
+  tr_insert_date = "";
 
   @Expose()
-  @Transform(({ obj }) => obj.transaction_info.transaction_amount.currency_code)
+  @Transform(({ obj }) =>
+    Utils.reportTime(obj.transaction_info.transaction_updated_date).format("HH:mm:ss"),
+  )
+  tr_insert_time = "";
+
+  @Expose()
+  @Transform(({ obj }) => obj.transaction_info.transaction_amount?.value.replace(".", ","))
+  tr_amount = "";
+
+  @Expose()
+  @Transform(({ obj }) => obj.transaction_info.transaction_amount?.currency_code)
   tr_currency = "";
 
   @Expose()
-  @Transform(({ obj }) =>
-    Utils.euroFormat(obj.transaction_info.fee_amount.value)
-  )
-  tr_fee_amount = Utils.euroFormat(0);
+  @Transform(({ obj }) => obj.transaction_info.fee_amount?.value.replace(".", ","))
+  tr_fee_amount = "";
 
   @Expose()
-  @Transform(({ obj }) => obj.transaction_info.fee_amount.currency_code)
+  @Transform(({ obj }) => obj.transaction_info.fee_amount?.currency_code)
   tr_fee_currency = "";
 
   @Expose()
@@ -77,4 +85,16 @@ export class Transaction {
   @Expose()
   @Transform(({ obj }) => obj.payer_info.country_code)
   payer_country_code = "";
+
+  @Expose()
+  @Transform(({ obj }) => obj.transaction_info.transaction_note)
+  tr_note = "";
+
+  @Expose()
+  @Transform(({ obj }) => obj.transaction_info.paypal_reference_id)
+  pp_ref_id = "";
+
+  @Expose()
+  @Transform(({ obj }) => obj.transaction_info.paypal_reference_id_type)
+  pp_ref_id_type = "";
 }

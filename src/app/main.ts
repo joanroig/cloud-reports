@@ -1,3 +1,4 @@
+import config from "config";
 import "dotenv/config";
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import moment from "moment";
@@ -12,7 +13,9 @@ const logger = Logger.getLogger("Main");
 let doc: GoogleSpreadsheet;
 
 export async function run(): Promise<string> {
-  logger.info("# STARTING #");
+  const today = moment().utcOffset(config.get("server-timezone"));
+
+  logger.info(`# STARTING AT ${today.format("DD.MM.YYYY HH:mm:ss")} #`);
 
   // Conect to Google Sheets
   logger.info("Connecting to Google Sheets");
@@ -38,7 +41,6 @@ export async function run(): Promise<string> {
 
   // Prepare to manage transactions
   const sheet = doc.sheetsByTitle["Transactions"];
-  const today = moment();
   let result;
 
   // Process transaction data
@@ -57,7 +59,7 @@ export async function run(): Promise<string> {
   }
 
   // Save run information in the configuration row
-  configRow["Last Run"] = today.format("DD.MM.YYYY HH:mm:SS");
+  configRow["Last Run"] = today.format("DD.MM.YYYY HH:mm:ss");
   configRow["Last Run Log"] = result;
   await configRow.save();
 

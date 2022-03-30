@@ -1,4 +1,5 @@
 import axios from "axios";
+import config from "config";
 import { Logger } from "../common/logger";
 
 const logger = Logger.getLogger("PayPal");
@@ -31,22 +32,34 @@ export async function getToken() {
 export async function getTransactions(
   token: string,
   startDate: moment.Moment,
-  endDate: moment.Moment
-) {
-  logger.info(
-    `Getting transactions from ${startDate.format("DD.MM.YYYY")} ` +
-      `to ${endDate.format("DD.MM.YYYY")}`
-  );
+  endDate: moment.Moment,
+): Promise<object[]> {
+  const start = startDate.format("YYYY-MM-DDTHH:mm:ss") + "Z";
+  const end = endDate.format("YYYY-MM-DDTHH:mm:ss") + "Z";
+  const pageSize = config.get("upload-row-chunks");
+  let totalPages = 1;
+  const transactions = [];
+  logger.info(`Getting transactions from ${start} to ${end}`);
 
-  const start = startDate.format("YYYY-MM-DDT00:00:00-00:00");
-  const end = endDate.format("YYYY-MM-DDT00:00:00-00:00");
-  const { data } = await axios({
-    url: `${process.env.paypal_url}/reporting/transactions?start_date=${start}&end_date=${end}&fields=all`,
-    method: "get",
-    headers: {
-      "content-type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return data;
+  // Load transactions in chunks
+  for (let page = 1; page <= totalPages; page++) {
+    const { data } = await axios({
+      url: `${process.env.paypal_url}/reporting/transactions?start_date=${start}&end_date=${end}&fields=all&page_size=${pageSize}&page=${page}`,
+      method: "get",
+      headers: {
+        "content-type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    // Get the number of pages left
+    if (page === 1) {
+      totalPages = data.total_pages;
+    }
+    logger.info(
+      `Loaded page ${data.page} of ${data.total_pages} ` +
+        `with ${data.transaction_details.length} transactions`,
+    );
+    transactions.push(...data.transaction_details);
+  }
+  return transactions;
 }

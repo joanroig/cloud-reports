@@ -1,3 +1,11 @@
 {
-  "upload-row-chunks": 50
+  "server-timezone": 2,
+  "report-timezone-offset": 1,
+  "upload-row-chunks": 50,
+  "download-paypal-chunks": 50,
+  "filter": {
+    "activate": true,
+    "subjects": [],
+    "tcodes": ["T0000", "T0003", "T0006", "T0011", "T0113", "T1107"]
+  }
 }
