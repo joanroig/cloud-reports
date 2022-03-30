@@ -1,4 +1,6 @@
+import config from "config";
 import currency from "currency.js";
+import moment from "moment";
 import { Logger } from "./logger";
 
 const logger = Logger.getLogger("Utils");
@@ -26,10 +28,16 @@ export default class Utils {
 
   // Separate an array into chunks
   static chunkArray(array: any[], chunkSize: number) {
-    return Array.from(
-      { length: Math.ceil(array.length / chunkSize) },
-      (_, index) => array.slice(index * chunkSize, (index + 1) * chunkSize)
+    return Array.from({ length: Math.ceil(array.length / chunkSize) }, (_, index) =>
+      array.slice(index * chunkSize, (index + 1) * chunkSize),
     );
+  }
+
+  // Shift a PayPal transaction datetime to match the timezone used in PayPal reports by adding an hour offset
+  static reportTime(date: string) {
+    const d = moment(date, "YYYY-MM-DDTHH:mm:ss");
+    const m = moment(d).add({ hours: Number(config.get("report-timezone-offset")) });
+    return m;
   }
 
   // Wait specified amount of seconds
