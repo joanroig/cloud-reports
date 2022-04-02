@@ -4,6 +4,7 @@ import { GoogleSpreadsheet } from "google-spreadsheet";
 import moment from "moment";
 import "reflect-metadata";
 import { Logger } from "./common/logger";
+import Utils from "./common/utils";
 import * as PaypalService from "./services/paypal.service";
 import * as ProcessService from "./services/process.service";
 
@@ -32,7 +33,7 @@ export async function run(): Promise<string> {
   logger.info(`Google Sheets title: ${doc.title}`);
 
   // PayPal connection
-  const token = await PaypalService.getToken();
+  await PaypalService.reloadToken();
 
   // Get configuration row
   const configSheet = doc.sheetsByTitle["Configuration"];
@@ -47,20 +48,28 @@ export async function run(): Promise<string> {
   if (reload === "TRUE") {
     // Prepare range to reload
     const start = moment(configRow["Start Date"], "MM.YYYY").startOf("month");
-    const since = moment(configRow["Reload Since"], "MM.YYYY").startOf("month");
+    const reloadFrom = moment(configRow["Reload From"], "MM.YYYY").startOf("month");
+    if (reloadFrom.isBefore(start)) {
+      Utils.throw(
+        `Reload date could not be earlier than initial date: ` +
+          `${reloadFrom.format("DD.MM.YYYY")} !< ` +
+          `${start.format("DD.MM.YYYY")}`,
+      );
+    }
     // Reload the needed rows
-    result = await ProcessService.reloadRows(token, sheet, today, start, since);
-    // Turn off reload in the spreadsheet
+    result = await ProcessService.runReload(sheet, reloadFrom, today);
+    // Turn off reload
     configRow["Reload"] = "FALSE";
-    await configRow.save();
   } else {
-    // Update all transactions from one month until today
-    result = await ProcessService.updateTransactions(token, sheet, today);
+    const lastRun = moment(configRow["Last Run"], "DD.MM.YYYY HH:mm:ss");
+    // Update all transactions since last run and get result string
+    result = await ProcessService.runUpdate(sheet, lastRun, today);
   }
 
-  // Save run information in the configuration row
+  // Update run information
   configRow["Last Run"] = today.format("DD.MM.YYYY HH:mm:ss");
   configRow["Last Run Log"] = result;
+  // Save the changes in the configuration row
   await configRow.save();
 
   logger.info(result);
