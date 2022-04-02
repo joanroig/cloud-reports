@@ -3,9 +3,10 @@ import config from "config";
 import { Logger } from "../common/logger";
 
 const logger = Logger.getLogger("PayPal");
+let token = "";
 
-// Get a token to do requests to the PayPal API
-export async function getToken() {
+// Set a token to do requests to the PayPal API
+export async function reloadToken() {
   logger.info("Getting PayPal token");
   const {
     data: { access_token },
@@ -25,12 +26,11 @@ export async function getToken() {
       grant_type: "client_credentials",
     },
   });
-  return access_token;
+  token = access_token;
 }
 
 // Get transactions in a date range. The date range should be one month maximum, and within the last 3 years.
 export async function getTransactions(
-  token: string,
   startDate: moment.Moment,
   endDate: moment.Moment,
 ): Promise<object[]> {

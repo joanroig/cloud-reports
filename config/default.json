@@ -1,8 +1,8 @@
 {
   "server-timezone": 2,
   "report-timezone-offset": 2,
-  "upload-row-chunks": 50,
-  "download-paypal-chunks": 50,
+  "upload-row-chunks": 100,
+  "download-paypal-chunks": 100,
   "filter": {
     "activate": false,
     "subjects": [],
