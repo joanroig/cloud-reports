@@ -5,7 +5,9 @@ import { Logger } from "../common/logger";
 const logger = Logger.getLogger("PayPal");
 let token = "";
 
-// Set a token to do requests to the PayPal API
+/**
+ * Set a token in this service to do requests to the PayPal API for the next executions
+ */
 export async function reloadToken() {
   logger.info("Getting PayPal token");
   const {
@@ -29,7 +31,13 @@ export async function reloadToken() {
   token = access_token;
 }
 
-// Get transactions in a date range. The date range should be one month maximum, and within the last 3 years.
+/**
+ * Get transactions in a date range. The date range should be one month maximum, and within the last 3 years.
+ * @param startDate
+ * @param endDate
+ * @returns Promise with objects containing transaction data in the format provided by PayPal:
+ * https://developer.paypal.com/docs/api/transaction-search/v1/#transactions-get-response
+ */
 export async function getTransactions(
   startDate: moment.Moment,
   endDate: moment.Moment,

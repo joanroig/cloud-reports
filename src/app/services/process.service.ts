@@ -9,7 +9,13 @@ import * as SheetService from "./sheet.service";
 
 const logger = Logger.getLogger("Process");
 
-// Reload all transactions from a certain month, keeping the older ones
+/**
+ * Reload all transactions from (one day before) a given month, keeping the older transactions
+ * @param sheet
+ * @param reloadFrom
+ * @param today
+ * @returns string with a result message
+ */
 export async function runReload(
   sheet: GoogleSpreadsheetWorksheet,
   reloadFrom: moment.Moment,
@@ -43,17 +49,23 @@ export async function runReload(
     await SheetService.insertRows(sheet, previous);
   }
 
-  return updateTransactions(sheet, reloadFrom, today);
+  const startDate = Utils.prepareStartDate(reloadFrom);
+  return updateTransactions(sheet, startDate, today);
 }
 
-// Update transactions from one day before last run until last minute of today
+/**
+ * Update transactions from (one day before) last run until last minute of today
+ * @param sheet
+ * @param lastRun
+ * @param today
+ * @returns string with a result message
+ */
 export async function runUpdate(
   sheet: GoogleSpreadsheetWorksheet,
   lastRun: moment.Moment,
   today: moment.Moment,
 ): Promise<string> {
-  // Subtract one day from the start date just in case the last update had not all data available from previous day.
-  const startDate = moment(lastRun).startOf("day").subtract({ days: 1 });
+  const startDate = Utils.prepareStartDate(lastRun);
   const endDate = moment(today).endOf("day");
 
   if (endDate.isBefore(startDate)) {
@@ -65,7 +77,13 @@ export async function runUpdate(
   return updateTransactions(sheet, startDate, endDate);
 }
 
-// Load data from month to month, until end of current month
+/**
+ * Load data month by month from the start date until the end date
+ * @param sheet
+ * @param startDate
+ * @param endDate
+ * @returns string with a result message
+ */
 async function updateTransactions(
   sheet: GoogleSpreadsheetWorksheet,
   startDate: moment.Moment,

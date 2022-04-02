@@ -11,7 +11,12 @@ import * as PaypalService from "./paypal.service";
 
 const logger = Logger.getLogger("Sheet");
 
-// Separate rows into chunks and save them into the sheet, Google Sheets takes maximum 60 insertions per minute
+/**
+ * Separate rows into chunks and save them into the sheet
+ * This method takes care of not exceeding 60 inserts per minute in Google Sheets
+ * @param sheet
+ * @param rows
+ */
 export async function insertRows(sheet: GoogleSpreadsheetWorksheet, rows: any[]) {
   const chunks = Utils.chunkArray(rows, config.get("upload-row-chunks"));
   if (rows.length > 0) {
@@ -26,12 +31,19 @@ export async function insertRows(sheet: GoogleSpreadsheetWorksheet, rows: any[])
   }
 }
 
-// Add all transactions between a date range into the spreadsheet, existing transactions will be updated if necessary
+/**
+ * Add all transactions between a date range into the spreadsheet
+ * Existing transactions will be updated if necessary
+ * @param sheet
+ * @param startDate
+ * @param endDate
+ * @returns Promise with an object that contains the created and edited transactions
+ */
 export async function updateRange(
   sheet: GoogleSpreadsheetWorksheet,
   startDate: moment.Moment,
   endDate: moment.Moment,
-) {
+): Promise<{ created: number; edited: number }> {
   logger.info(
     `===== Updating transactions from ${startDate.format("DD.MM.YYYY")} ` +
       `to ${endDate.format("DD.MM.YYYY")} =====`,
@@ -63,8 +75,13 @@ export async function updateRange(
   return { created: newRows.length, edited };
 }
 
-// Check and update row values if needed. Returns 1 if the row has been edited, 0 instead.
-async function updateRow(row: GoogleSpreadsheetRow, sale: any) {
+/**
+ * Check and update row values if needed. Returns 1 if the row has been edited, 0 instead.
+ * @param row
+ * @param sale
+ * @returns Promise<number> with 1 if the row has been edited, 0 instead
+ */
+async function updateRow(row: GoogleSpreadsheetRow, sale: any): Promise<number> {
   let edited = false;
 
   Object.entries(sale).forEach(([key, val]) => {
@@ -85,7 +102,12 @@ async function updateRow(row: GoogleSpreadsheetRow, sale: any) {
   return edited ? 1 : 0;
 }
 
-// Fetch transactions from a certain period of time
+/**
+ * Fetch transactions from a certain period of time
+ * @param startDate
+ * @param endDate
+ * @returns Promise with an array of transactions
+ */
 async function getTransactions(
   startDate: moment.Moment,
   endDate: moment.Moment,
