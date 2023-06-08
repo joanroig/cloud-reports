@@ -107,5 +107,8 @@ dist
 ._*
 .DS_Store
 
+# Yarn cache
+.yarn
+
 # Custom
 build
